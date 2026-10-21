@@ -1,6 +1,9 @@
 import React from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Menu as MenuIcon, X, Search, ShoppingCart, Utensils, BookOpen, ChefHat, Leaf, UsersRound, MapPin, Star, ArrowRight, Clock3, Flame, Phone, Instagram } from 'lucide-react';
+
+const storyLinkStyle = {display:'flex',flexDirection:'column',gap:'10px',padding:'18px',border:'1px solid rgba(233,158,59,.2)',borderRadius:'9px',background:'rgba(255,255,255,.025)',transition:'border-color .2s',color:'#f1e2d1'};
+const storyPillStyle = {display:'inline-flex',alignItems:'center',padding:'9px 12px',border:'1px solid rgba(233,158,59,.3)',borderRadius:'999px',color:'#efb15b',fontSize:'11px'};
 
 const dishes = [
   { name: 'Chicken Mandi (Roast)', desc: 'Classic roasted chicken with fragrant mandi rice', price: '₹249 / ₹449', tag: 'POPULAR', image: 'photo-1626082927389-6cd097cdc6ec', category: 'Mandi' },
@@ -120,6 +123,33 @@ const FOOD_PHOTO_FALLBACKS = [
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(() => {
+    const path = window.location.pathname.replace(/\/$/, '') || '/';
+    return ({ '/menu': 'menu', '/story': 'story', '/gallery': 'gallery', '/visit': 'visit' })[path] || 'home';
+  });
+
+  useEffect(() => {
+    const syncPage = () => {
+      const path = window.location.pathname.replace(/\/$/, '') || '/';
+      setCurrentPage(({ '/menu': 'menu', '/story': 'story', '/gallery': 'gallery', '/visit': 'visit' })[path] || 'home');
+    };
+    window.addEventListener('popstate', syncPage);
+    return () => window.removeEventListener('popstate', syncPage);
+  }, []);
+
+  const navigateTo = (page) => {
+    const paths = { home: '/', menu: '/menu', story: '/story', gallery: '/gallery', visit: '/visit' };
+    const path = paths[page] || '/';
+    if (window.location.pathname !== path) window.history.pushState({}, '', path);
+    setCurrentPage(page);
+    setMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const pageLink = (page) => (event) => {
+    event.preventDefault();
+    navigateTo(page);
+  };
   const [cartCount, setCartCount] = useState(0);
   const [notice, setNotice] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
@@ -139,17 +169,22 @@ function App() {
     <div className="site-shell">
       <div className="ambient ambient-one" /><div className="ambient ambient-two" />
       <header className="topbar">
-        <a className="brand" href="#home" onClick={closeMenu} aria-label="M.S Mandi & Shawarma home">
+        <a className="brand" href="/" onClick={pageLink('home')} aria-label="M.S Mandi & Shawarma home">
           <span className="brand-mark"><img src="/logo.svg" alt="M.S emblem" /></span><span className="brand-name">M.S Mandi <i>&amp;</i> Shawarma</span><span className="brand-subtitle">ARABIAN · LEBANESE · TURKISH</span>
         </a>
         <button className="mobile-menu icon-button" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X /> : <MenuIcon />}</button>
         <nav className={menuOpen ? 'nav-links nav-open' : 'nav-links'}>
-          <a className="active" href="#home" onClick={closeMenu}>Home</a><a href="#menu" onClick={closeMenu}>Menu</a><a href="#story" onClick={closeMenu}>Our Story</a><a href="#gallery" onClick={closeMenu}>Gallery</a><a href="#visit" onClick={closeMenu}>Visit Us</a>
+          <a className={currentPage === 'home' ? 'active' : ''} href="/" onClick={pageLink('home')}>Home</a>
+          <a className={currentPage === 'menu' ? 'active' : ''} href="/menu" onClick={pageLink('menu')}>Menu</a>
+          <a className={currentPage === 'story' ? 'active' : ''} href="/story" onClick={pageLink('story')}>Our Story</a>
+          <a className={currentPage === 'gallery' ? 'active' : ''} href="/gallery" onClick={pageLink('gallery')}>Gallery</a>
+          <a className={currentPage === 'visit' ? 'active' : ''} href="/visit" onClick={pageLink('visit')}>Visit Us</a>
         </nav>
-        <div className="nav-actions"><button className="icon-button search-button" aria-label="Search menu" onClick={() => document.querySelector('#menu')?.scrollIntoView({ behavior: 'smooth' })}><Search size={19} /></button><button className="icon-button cart-button" aria-label={`Shopping cart with ${cartCount} items`} onClick={() => setNotice(cartCount ? `You have ${cartCount} item${cartCount === 1 ? '' : 's'} in your basket` : 'Your basket is waiting for something delicious')}><ShoppingCart size={19} />{cartCount > 0 && <span className="cart-count">{cartCount}</span>}</button><a className="button button-primary nav-order" href="https://www.zomato.com/hyderabad/ms-mandi-shawarma-charminar/order" target="_blank" rel="noreferrer">Order on Zomato <ArrowRight size={16} /></a></div>
+        <div className="nav-actions"><button className="icon-button search-button" aria-label="Search menu" onClick={() => navigateTo('menu')}><Search size={19} /></button><button className="icon-button cart-button" aria-label={`Shopping cart with ${cartCount} items`} onClick={() => setNotice(cartCount ? `You have ${cartCount} item${cartCount === 1 ? '' : 's'} in your basket` : 'Your basket is waiting for something delicious')}><ShoppingCart size={19} />{cartCount > 0 && <span className="cart-count">{cartCount}</span>}</button><a className="button button-primary nav-order" href="https://www.zomato.com/hyderabad/ms-mandi-shawarma-charminar/order" target="_blank" rel="noreferrer">Order on Zomato <ArrowRight size={16} /></a></div>
       </header>
 
       <main>
+        {currentPage === 'home' && (<>
         <section className="hero" id="home">
           <div className="hero-image" role="img" aria-label="A beautifully presented Arabian mandi platter" />
           <div className="hero-vignette" />
@@ -157,32 +192,75 @@ function App() {
             <p className="eyebrow"><span /> GROUP OF MISKEEN <span /></p>
             <h1>M.S Mandi & Shawarma.<br /><em>Made to be shared.</em></h1>
             <p className="hero-copy">Mandi, shawarma and a table full of good things. Explore Arabian, Lebanese and Turkish favourites, made for sharing with your favourite people.</p>
-            <div className="hero-buttons"><a className="button button-primary" href="#menu"><Utensils size={17} /> Explore Our Menu <ArrowRight size={16} /></a><a className="button button-outline" href="#story"><BookOpen size={17} /> Our Story</a></div>
+            <div className="hero-buttons"><a className="button button-primary" href="/menu" onClick={pageLink('menu')}><Utensils size={17} /> Explore Our Menu <ArrowRight size={16} /></a><a className="button button-outline" href="/story" onClick={pageLink('story')}><BookOpen size={17} /> Our Story</a></div>
             <div className="hero-rating"><div className="avatar-stack"><span>MH</span><span>✦</span><span>♥</span></div><div><div className="stars">★★★★☆ <b>4.1 dining · 4.0 delivery</b></div><small>Zomato listing · ratings can change</small></div></div>
           </div>
           <div className="hero-stamp"><span>AUTHENTIC</span><strong>100%</strong><span>ARABIAN FLAVOUR</span><div>✦</div></div>
-          <a href="#menu" className="scroll-cue"><span /> SCROLL TO DISCOVER</a>
+          <a href="/menu" onClick={pageLink('menu')} className="scroll-cue"><span /> SCROLL TO DISCOVER</a>
         </section>
 
         <section className="features" aria-label="Why choose Mandi & Shawarma">
           <div className="feature"><ChefHat /><div><strong>Authentic Recipes</strong><span>Tradition in every bite</span></div></div><div className="feature"><Leaf /><div><strong>Fresh Ingredients</strong><span>Quality you can taste</span></div></div><div className="feature"><UsersRound /><div><strong>Made for Sharing</strong><span>Feasts for every occasion</span></div></div><div className="feature"><Flame /><div><strong>Slow-Cooked Goodness</strong><span>Flavour worth the wait</span></div></div>
         </section>
 
+        </>)}
+
+        {currentPage === 'menu' && (<>
         <section className="menu-section section-wrap" id="menu">
-          <div className="section-heading"><div><p className="eyebrow">A FEAST FOR THE SENSES</p><h2>Our <em>Menu</em></h2><p className="section-copy">Mandi, shawarma, wraps, seafood, starters, broasted chicken, burgers, pizza, gravies and desserts.</p></div><a className="text-link" href="#menu">Explore full menu <ArrowRight size={16} /></a></div>
+          <div className="section-heading"><div><p className="eyebrow">A FEAST FOR THE SENSES</p><h2>Our <em>Menu</em></h2><p className="section-copy">Mandi, shawarma, wraps, seafood, starters, broasted chicken, burgers, pizza, gravies and desserts.</p></div><a className="text-link" href="/menu" onClick={pageLink('menu')}>Explore full menu <ArrowRight size={16} /></a></div>
           <div className="category-tabs">{categories.map(category => <button key={category} className={activeCategory === category ? 'category-tab selected' : 'category-tab'} onClick={() => setActiveCategory(category)}>{category}</button>)}</div><div className="menu-toolbar"><span>Prices in INR · Half / Full where shown</span><button className="text-link" onClick={() => setSearchOpen(v => !v)}><Search size={15}/> Search menu</button></div>{searchOpen && <input className="menu-search-input" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search mandi, fish, rice, sauce..." aria-label="Search menu" />}<div className="dish-grid">{visibleDishes.map((dish, index) => <article className="dish-card" key={dish.name}><div className="dish-photo"><img src={photoForDish(dish)} alt={dish.name} loading="lazy" onError={(event) => { const img = event.currentTarget; if (img.dataset.fallback) { img.onerror = null; img.style.visibility = "hidden"; return; } img.dataset.fallback = "1"; img.src = FOOD_PHOTO_FALLBACKS[(index + 1) % FOOD_PHOTO_FALLBACKS.length]; }}/><span className="dish-tag">{dish.tag}</span><button className="add-button" onClick={() => addToCart(dish.name)} aria-label={`Add ${dish.name} to basket`}>+</button></div><div className="dish-info"><div><h3>{dish.name}</h3><p>{dish.desc}</p></div><strong className="price">{dish.price}</strong></div><div className="dish-bottom"><span><Star size={13} fill="currentColor" /> Menu favourite</span><button onClick={() => addToCart(dish.name)}>Add to order <ArrowRight size={14} /></button></div></article>)}</div>{visibleDishes.length === 0 && <p className="empty-menu">No dishes found. Try another search.</p>}
           <div className="menu-note"><span className="note-icon"><Utensils size={18} /></span><p><strong>Big appetite? Bring your people.</strong><br />Explore family packs and extras for a table full of flavour.</p><a href="https://www.zomato.com/hyderabad/ms-mandi-shawarma-charminar/order" target="_blank" rel="noreferrer">Order on Zomato <ArrowRight size={15} /></a></div>
         <p className="menu-disclaimer">*Menu prices are indicative and may change. This website is not connected to Zomato; use the official listing for current availability, customisations and live prices.</p>
         </section>
 
-        <section className="story-section" id="story"><div className="story-photo"><img src={FOOD_PHOTOS.chickenMandi} alt="Warm, atmospheric restaurant dining room" loading="lazy"/><div className="photo-caption"><span>HOSPITALITY IS OUR TRADITION</span><strong>Gather. Feast. Repeat.</strong></div></div><div className="story-copy"><p className="eyebrow">MORE THAN JUST A MEAL</p><h2>A little taste of<br /><em>Arabian tradition.</em></h2><p>At Mandi & Shawarma, every platter is an invitation to slow down, gather around, and share something special. Inspired by the generous spirit of Arabian hospitality, we bring bold spices, fragrant rice, and memorable moments to your table.</p><a className="button button-outline" href="#visit">Discover Our Story <ArrowRight size={16} /></a><div className="story-stats"><div><strong>Made fresh</strong><span>Every single day</span></div><div><strong>Shared with love</strong><span>One platter at a time</span></div></div></div></section>
+        </>)}
 
-        <section className="gallery-section section-wrap" id="gallery"><div className="section-heading"><div><p className="eyebrow">A CLOSER LOOK</p><h2>Come hungry. <em>Leave happy.</em></h2></div><a className="text-link" href="#visit">Come see us <ArrowRight size={16} /></a></div><div className="gallery-grid"><img src={FOOD_PHOTOS.muttonMandi} alt="Richly prepared grilled meat" loading="lazy"/><img src={FOOD_PHOTOS.pizza} alt="Freshly prepared restaurant food" loading="lazy"/><img src={FOOD_PHOTOS.shawarma} alt="Restaurant dining atmosphere" loading="lazy"/><img src={FOOD_PHOTOS.kunafa} alt="A colourful meal ready to share" loading="lazy"/></div></section>
+        {currentPage === 'story' && (<>
+        <section className="story-section" id="story"><div className="story-photo"><img src="/gallery/restaurant-interior-1.png" alt="M.S Mandi & Shawarma dining area with traditional floor seating" loading="lazy"/><div className="photo-caption"><span>HOSPITALITY IS OUR TRADITION</span><strong>Gather. Feast. Repeat.</strong></div></div><div className="story-copy"><p className="eyebrow">MORE THAN JUST A MEAL</p><h2>A little taste of<br /><em>Arabian tradition.</em></h2><p>M.S Mandi &amp; Shawarma is a restaurant in Charminar, Hyderabad, serving Arabian, Lebanese and Turkish-inspired food. From mandi platters to shawarma and wraps, the idea is simple: bring people together over generous, flavourful food.</p><p>Part of the Group of Miskeen, the restaurant is located around the Purani Haveli, Dabeerpura and Zehra Nagar Colony area. Explore the menu or check the official listing for current dishes, prices and ordering availability.</p><a className="button button-outline" href="https://www.zomato.com/hyderabad/ms-mandi-shawarma-charminar" target="_blank" rel="noreferrer">View restaurant on Zomato <ArrowRight size={16} /></a><div className="story-stats"><div><strong>Charminar</strong><span>Hyderabad, Telangana</span></div><div><strong>Group of Miskeen</strong><span>Restaurant identity</span></div></div></div></section>
 
+        <section className="section-wrap story-discovery" aria-labelledby="story-discovery-title" style={{paddingTop: '0', maxWidth: '1320px'}}>
+          <div className="section-heading"><div><p className="eyebrow">EXPLORE OUR NEIGHBOURHOOD</p><h2 id="story-discovery-title">Around <em>Charminar.</em></h2><p className="section-copy">Explore nearby Hyderabad areas, restaurant guides and the official M.S Mandi &amp; Shawarma listing.</p></div></div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(210px,1fr))',gap:'12px'}}>
+            <a href="https://www.zomato.com/hyderabad/charminar-restaurants" target="_blank" rel="noreferrer" style={storyLinkStyle}><strong>Charminar restaurants</strong><span>Browse restaurants around Charminar <ArrowRight size={14}/></span></a>
+            <a href="https://www.zomato.com/hyderabad/ghansi-bazaar-restaurants" target="_blank" rel="noreferrer" style={storyLinkStyle}><strong>Ghansi Bazaar</strong><span>Explore nearby dining <ArrowRight size={14}/></span></a>
+            <a href="https://www.zomato.com/hyderabad/begum-bazaar-restaurants" target="_blank" rel="noreferrer" style={storyLinkStyle}><strong>Begum Bazaar</strong><span>Restaurants in the area <ArrowRight size={14}/></span></a>
+            <a href="https://www.zomato.com/hyderabad/rein-bazar-restaurants" target="_blank" rel="noreferrer" style={storyLinkStyle}><strong>Rein Bazar</strong><span>Explore nearby options <ArrowRight size={14}/></span></a>
+            <a href="https://www.zomato.com/hyderabad/nampally-restaurants" target="_blank" rel="noreferrer" style={storyLinkStyle}><strong>Nampally</strong><span>Restaurants around Nampally <ArrowRight size={14}/></span></a>
+            <a href="https://www.zomato.com/hyderabad/casual-dining" target="_blank" rel="noreferrer" style={storyLinkStyle}><strong>Casual dining in Hyderabad</strong><span>Discover casual dining spots <ArrowRight size={14}/></span></a>
+          </div>
+          <div style={{marginTop:'34px',padding:'22px',border:'1px solid rgba(233,158,59,.22)',borderRadius:'10px',background:'linear-gradient(110deg,#24170e,#130e0a)'}}>
+            <p className="eyebrow" style={{marginBottom:'10px'}}>FREQUENT SEARCHES</p><p style={{color:'#b7a99b',fontSize:'13px',lineHeight:1.8,margin:'0 0 15px'}}>Looking for the menu, location or ordering page? These links take you to the official restaurant listing and related searches.</p>
+            <div style={{display:'flex',flexWrap:'wrap',gap:'10px'}}>
+              <a href="https://www.zomato.com/hyderabad/ms-mandi-shawarma-charminar" target="_blank" rel="noreferrer" style={storyPillStyle}>M.S Mandi &amp; Shawarma</a>
+              <a href="https://www.zomato.com/hyderabad/ms-mandi-shawarma-charminar/menu" target="_blank" rel="noreferrer" style={storyPillStyle}>Menu</a>
+              <a href="https://www.zomato.com/hyderabad/ms-mandi-shawarma-charminar/order" target="_blank" rel="noreferrer" style={storyPillStyle}>Order food online</a>
+              <a href="https://www.zomato.com/hyderabad/order-food-online" target="_blank" rel="noreferrer" style={storyPillStyle}>Order food in Hyderabad</a>
+              <a href="https://www.zomato.com/hyderabad/hyderabad-city-restaurants/casual-dining" target="_blank" rel="noreferrer" style={storyPillStyle}>Casual dining in Hyderabad City</a>
+              <a href="https://www.zomato.com/hyderabad/charminar-restaurants/casual-dining" target="_blank" rel="noreferrer" style={storyPillStyle}>Casual dining in Charminar</a>
+            </div>
+          </div>
+          <p style={{fontSize:'10px',color:'#85766a',lineHeight:1.7,marginTop:'16px'}}>Restaurant details and external discovery links are provided for convenience. Zomato is a third-party platform; menus, availability and prices may change.</p>
+        </section>
+
+        </>)}
+
+        {currentPage === 'gallery' && (<>
+        <section className="gallery-section section-wrap" id="gallery"><div className="section-heading"><div><p className="eyebrow">A CLOSER LOOK</p><h2>Come hungry. <em>Leave happy.</em></h2></div><a className="text-link" href="/visit" onClick={pageLink('visit')}>Come see us <ArrowRight size={16} /></a></div><div className="gallery-grid restaurant-gallery">
+          <figure><img src="/gallery/restaurant-interior-1.png" alt="M.S Mandi & Shawarma dining area with patterned floor seating" loading="lazy"/><figcaption>Our traditional seating</figcaption></figure>
+          <figure><img src="/gallery/restaurant-interior-2.png" alt="Interior view of the restaurant seating and decorated pillars" loading="lazy"/><figcaption>A welcoming space</figcaption></figure>
+          <figure><img src="/gallery/restaurant-interior-3.png" alt="Restaurant interior with floor seating and wall display" loading="lazy"/><figcaption>Made for gathering</figcaption></figure>
+          <figure><img src="/gallery/restaurant-interior-4.png" alt="Low tables and patterned carpets in the dining area" loading="lazy"/><figcaption>Comfortable floor </figcaption></figure>
+         
+        </div></section>
+
+        </>)}
+
+        {currentPage === 'visit' && (<>
         <section className="visit-section" id="visit"><div className="visit-inner"><div><p className="eyebrow">YOUR TABLE IS WAITING</p><h2>Make room for<br /><em>something memorable.</em></h2><p><MapPin size={15} style={{display:"inline",verticalAlign:"middle",marginRight:6,color:"#e9a13a"}}/>Zehra Nagar Colony, Purani Haveli, Dabeerpura, Charminar, Hyderabad 500024</p><p><Clock3 size={15} style={{display:"inline",verticalAlign:"middle",marginRight:6,color:"#e9a13a"}}/>Zomato lists the outlet as open 24 hours; please confirm before visiting.</p></div><div className="visit-actions"><a className="button button-primary" href="https://www.zomato.com/hyderabad/ms-mandi-shawarma-charminar/order" target="_blank" rel="noreferrer"><Utensils size={17} /> Order on Zomato <ArrowRight size={16} /></a><a className="button button-outline" href="tel:+919014195272"><Phone size={16} /> Call +91 90141 95272</a></div></div></section>
+        </>)}
       </main>
 
-      <footer className="footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><img src="/logo.svg" alt="M.S emblem" /></span><span className="brand-name">M.S Mandi <i>&amp;</i> Shawarma</span><span className="brand-subtitle">ARABIAN · LEBANESE · TURKISH</span></a><p>Arabian, Lebanese & Turkish food.</p><div className="footer-links"><a href="#menu">Menu</a><a href="#story">Our Story</a><a href="#visit">Contact</a><a href="https://www.zomato.com/hyderabad/ms-mandi-shawarma-charminar" target="_blank" rel="noreferrer">Zomato</a><a href="tel:+919014195272">Call us</a><a href="#gallery"><Instagram size={16} /> Gallery</a></div><span className="copyright">© {new Date().getFullYear()} M.S Mandi & Shawarma · Group of Miskeen</span></footer>
+      <footer className="footer"><a className="brand footer-brand" href="/" onClick={pageLink('home')}><span className="brand-mark"><img src="/logo.svg" alt="M.S emblem" /></span><span className="brand-name">M.S Mandi <i>&amp;</i> Shawarma</span><span className="brand-subtitle">ARABIAN · LEBANESE · TURKISH</span></a><p>Arabian, Lebanese & Turkish food.</p><div className="footer-links"><a href="/menu" onClick={pageLink('menu')}>Menu</a><a href="/story" onClick={pageLink('story')}>Our Story</a><a href="/visit" onClick={pageLink('visit')}>Contact</a><a href="https://www.zomato.com/hyderabad/ms-mandi-shawarma-charminar" target="_blank" rel="noreferrer">Zomato</a><a href="tel:+919014195272">Call us</a><a href="/gallery" onClick={pageLink('gallery')}><Instagram size={16} /> Gallery</a></div><span className="copyright">© {new Date().getFullYear()} M.S Mandi & Shawarma · Group of Miskeen</span></footer>
       {notice && <div className="toast" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Dismiss notification"><X size={15} /></button></div>}
     </div>
   );
