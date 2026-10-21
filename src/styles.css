@@ -11,3 +11,69 @@
 @media(max-width:760px){.brand{grid-template-columns:34px auto;column-gap:5px}.brand-mark{width:34px;height:34px}.brand-name{font-size:16px}.brand-subtitle{font-size:5px;letter-spacing:.8px}.category-tabs{gap:7px}.category-tab{padding:9px 11px;font-size:10px}.menu-toolbar{align-items:flex-start;flex-direction:column;gap:10px}}
 
 .menu-disclaimer{max-width:900px;margin:16px 0 0;color:#938271;font-size:10px;line-height:1.7}.visit-inner>div>p:last-child{line-height:1.8}.menu-search-input{display:block;width:100%;max-width:420px;margin:14px 0;padding:13px 15px;background:#17110d;border:1px solid var(--line);border-radius:8px;color:#fff;font:inherit;font-size:12px;outline-color:var(--gold)}.menu-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;color:#9f8f7e;font-size:10px;margin-top:15px}.menu-toolbar .text-link{background:transparent;border:0;cursor:pointer;font-family:inherit}@media(max-width:760px){.menu-toolbar{align-items:flex-start}.category-tabs{row-gap:8px}.dish-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Mobile header spacing fix */
+@media (max-width: 760px) {
+  .topbar {
+    padding: 0 4%;
+    gap: 8px;
+  }
+
+  .brand {
+    flex: 1 1 auto;
+    min-width: 0;
+    grid-template-columns: 30px minmax(0, 1fr);
+    column-gap: 5px;
+  }
+
+  .brand-mark {
+    width: 30px;
+    height: 30px;
+  }
+
+  .brand-name {
+    font-size: clamp(13px, 3.7vw, 16px);
+    letter-spacing: -0.5px;
+    white-space: nowrap;
+  }
+
+  .brand-subtitle {
+    font-size: 5px;
+    letter-spacing: 0.6px;
+  }
+
+  .mobile-menu {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    margin-left: 0;
+  }
+
+  .nav-actions {
+    flex: 0 0 auto;
+    gap: 6px;
+  }
+
+  .cart-button {
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+  }
+
+  /* Compact Zomato button on mobile only */
+  .nav-order {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 0;
+    gap: 0;
+  }
+
+  .nav-order svg {
+    width: 17px;
+    height: 17px;
+  }
+}
